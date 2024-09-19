@@ -4,6 +4,6 @@
   "dependencies": {
     "node-fetch": "^2.6.1",
     "form-data": "^4.0.0",
-    "busboy": "^1.6.0"
+    "@vercel/node": "^2.15.1"
   }
 }
