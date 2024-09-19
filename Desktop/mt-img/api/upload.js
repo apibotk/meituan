@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 const FormData = require('form-data');
-const { Readable } = require('stream');
+const { Buffer } = require('buffer');
 
 module.exports = async (req, res) => {
   console.log('Received upload request');
@@ -8,13 +8,32 @@ module.exports = async (req, res) => {
   if (req.method === 'POST') {
     console.log('Processing POST request');
     
-    // 创建一个可读流
-    const stream = new Readable();
-    stream.push(req.body);
-    stream.push(null);
+    // 获取原始请求体
+    let chunks = [];
+    req.on('data', chunk => chunks.push(chunk));
+    
+    await new Promise(resolve => req.on('end', resolve));
+    
+    const buffer = Buffer.concat(chunks);
+    
+    // 解析 multipart/form-data
+    const boundary = req.headers['content-type'].split('boundary=')[1];
+    const parts = buffer.toString().split(`--${boundary}`);
+    let fileContent;
+    
+    for (let part of parts) {
+      if (part.includes('filename=')) {
+        fileContent = part.split('\r\n\r\n').slice(1).join('\r\n\r\n');
+        break;
+      }
+    }
+    
+    if (!fileContent) {
+      return res.status(400).json({ error: 'No file content found' });
+    }
 
     const form = new FormData();
-    form.append('file', stream, {
+    form.append('file', Buffer.from(fileContent), {
       filename: 'image.jpg',
       contentType: 'image/jpeg',
     });
