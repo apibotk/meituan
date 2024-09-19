@@ -12,7 +12,7 @@ function uploadImage() {
             const formData = new FormData();
             formData.append('file', blob, 'image.jpg');
 
-            fetch('/api/upload', {
+            fetch('/api/upload', {  // 确保这里指向正确的API端点
                 method: 'POST',
                 body: formData
             })
