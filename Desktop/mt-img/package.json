@@ -1,0 +1,8 @@
+{
+  "name": "meituan-image-uploader",
+  "version": "1.0.0",
+  "dependencies": {
+    "node-fetch": "^2.6.1",
+    "form-data": "^4.0.0"
+  }
+}
