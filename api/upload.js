@@ -1,5 +1,7 @@
 const fetch = require('node-fetch');
 const FormData = require('form-data');
+const multiparty = require('multiparty');
+const fs = require('fs');
 
 module.exports = async (req, res) => {
   console.log('Received upload request');
@@ -10,19 +12,29 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { file } = req.body;
+    const form = new multiparty.Form();
+
+    const { files } = await new Promise((resolve, reject) => {
+      form.parse(req, (err, fields, files) => {
+        if (err) reject(err);
+        else resolve({ files });
+      });
+    });
+
+    const file = files.file[0];
+
     if (!file) {
       return res.status(400).json({ error: 'No file found in request body' });
     }
 
-    const form = new FormData();
-    form.append('file', Buffer.from(file.data), {
-      filename: file.name,
-      contentType: file.type,
+    const formData = new FormData();
+    formData.append('file', fs.createReadStream(file.path), {
+      filename: file.originalFilename,
+      contentType: file.headers['content-type'],
     });
 
     const headers = {
-      ...form.getHeaders(),
+      ...formData.getHeaders(),
       'Accept': '*/*',
       'Accept-Encoding': 'gzip, deflate, br',
       'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6',
@@ -39,7 +51,7 @@ module.exports = async (req, res) => {
     console.log('Sending request to Meituan API');
     const response = await fetch('https://pic-up.meituan.com/extrastorage/new/video?isHttps=true', {
       method: 'POST',
-      body: form,
+      body: formData,
       headers: headers,
     });
 
