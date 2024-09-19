@@ -9,38 +9,26 @@ function uploadImage() {
     fetch(previewImage.src)
         .then(res => res.blob())
         .then(blob => {
-            const reader = new FileReader();
-            reader.onloadend = function() {
-                const base64data = reader.result;
-                
-                fetch('/api/upload', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        file: {
-                            name: 'image.jpg',
-                            type: blob.type,
-                            data: base64data.split(',')[1]
-                        }
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        throw new Error(JSON.stringify(data));
-                    }
-                    uploadStatus.textContent = '上传成功！图片链接已自动复制到剪贴板。';
-                    displayResult(data);
-                    copyTextToClipboard(data.Jobs);
-                    saveToLocalStorage(data);
-                })
-                .catch(error => {
-                    console.error('上传错误:', error);
-                    uploadStatus.textContent = '上传失败，请重试。错误详情: ' + error.message;
-                });
-            };
-            reader.readAsDataURL(blob);
+            const formData = new FormData();
+            formData.append('file', blob, 'image.jpg');
+
+            fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(JSON.stringify(data));
+                }
+                uploadStatus.textContent = '上传成功！图片链接已自动复制到剪贴板。';
+                displayResult(data);
+                copyTextToClipboard(data.Jobs);
+                saveToLocalStorage(data);
+            })
+            .catch(error => {
+                console.error('上传错误:', error);
+                uploadStatus.textContent = '上传失败，请重试。错误详情: ' + error.message;
+            });
         });
 }
