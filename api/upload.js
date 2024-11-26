@@ -14,19 +14,27 @@ module.exports = async (req, res) => {
   try {
     const form = new multiparty.Form();
 
+    console.log('Parsing form');
     const { files } = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
-        if (err) reject(err);
-        else resolve({ files });
+        if (err) {
+          console.error('Error parsing form:', err);
+          reject(err);
+        } else {
+          console.log('Form parsed successfully');
+          resolve({ files });
+        }
       });
     });
 
     const file = files.file[0];
 
     if (!file) {
+      console.log('No file found in request');
       return res.status(400).json({ error: 'No file found in request body' });
     }
 
+    console.log('Preparing file for upload:', file.originalFilename);
     const formData = new FormData();
     formData.append('file', fs.createReadStream(file.path), {
       filename: file.originalFilename,
