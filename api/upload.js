@@ -55,18 +55,31 @@ module.exports = async (req, res) => {
       headers: headers,
     });
 
-    const data = await response.json();
-    console.log('Received response from Meituan API:', data);
+    const responseText = await response.text();
+    console.log('Raw response:', responseText);
 
-    if (data.success === true) {
-      return res.json({
-        Jobs: data.data.originalLink,
-        Name: data.data.originalFileName,
-        os: 'node-oss.zai1.com'
-      });
-    } else {
-      console.error('Upload failed:', data);
-      return res.status(400).json({ error: 'Upload failed', details: data });
+    if (!response.ok) {
+      console.error('Error response:', response.status, response.statusText);
+      return res.status(response.status).json({ error: 'Error from server', details: response.statusText });
+    }
+
+    try {
+      const data = JSON.parse(responseText);
+      console.log('Parsed response:', data);
+
+      if (data.success === true) {
+        return res.json({
+          Jobs: data.data.originalLink,
+          Name: data.data.originalFileName,
+          os: 'node-oss.zai1.com'
+        });
+      } else {
+        console.error('Upload failed:', data);
+        return res.status(400).json({ error: 'Upload failed', details: data });
+      }
+    } catch (error) {
+      console.error('Failed to parse JSON:', error);
+      return res.status(500).json({ error: 'Invalid response from server', details: error.message });
     }
   } catch (error) {
     console.error('Server error:', error);
